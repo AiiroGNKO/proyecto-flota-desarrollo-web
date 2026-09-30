@@ -11,7 +11,7 @@
 ## 2. Equipo
 | Integrante | Rol | Usuario GitHub |
 |---|---|---|
-| Alan R. | Backend / Frontend / Documentación | @alanr |
+| Alan R. | Backend / Frontend / Documentación | @AiiroGNKO |
 
 ## 3. Stack y versiones
 | Tecnología | Versión |
