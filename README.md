@@ -58,5 +58,5 @@ Flujo: Navegador -> React (`http://localhost:5173`) -> Proxy Vite (`/api`) -> Dj
 - **Frontend**: `client.js` para peticiones HTTP centralizadas, `VehiculoList.jsx` y `VehiculoForm.jsx`.
 
 ## 8. Capturas del Flujo CRUD
-- **Listado y Operatividad**: `![Listado](docs\img\LAB8\Captura de pantalla 2026-10-06 110253.png)`
-- **Validación del Servidor**: `![Errores](docs\img\LAB8\Captura de pantalla 2026-10-06 112023.png)`
+- **Listado y Operatividad**: ![Listado](docs/img/LAB8/Captura%20de%20pantalla%202026-10-06%20110253.png)
+- **Validación del Servidor**: ![Errores](docs/img/LAB8/Captura%20de%20pantalla%202026-10-06%20112023.png)
