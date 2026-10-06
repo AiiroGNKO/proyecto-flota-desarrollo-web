@@ -1,6 +1,7 @@
-from django.urls import path
-from . import views
+from rest_framework.routers import DefaultRouter
+from .views import VehiculoViewSet
 
-urlpatterns = [
-    path("vehiculos/", views.vehiculo_list, name="vehiculo-list"),
-]
+router = DefaultRouter()
+router.register("vehiculos", VehiculoViewSet, basename="vehiculo")
+
+urlpatterns = router.urls
