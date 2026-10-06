@@ -40,3 +40,23 @@ Proyecto_Flota_desarrollo_web/
 │   └── vite.config.js   # Configurado con proxy hacia Django
 ├── docs/img/            # Capturas de evidencia
 └── .gitignore
+```
+
+## 6. Arquitectura de Integración
+Flujo: Navegador -> React (`http://localhost:5173`) -> Proxy Vite (`/api`) -> Django REST Framework (`http://127.0.0.1:8000`) -> SQLite.
+
+### Contrato de la API (`/api/vehiculos/`)
+| Método | URL | Descripción | Código |
+|---|---|---|---|
+| GET | `/api/vehiculos/` | Listar vehículos | 200 OK |
+| POST | `/api/vehiculos/` | Crear vehículo | 201 Created / 400 Bad Request |
+| PUT | `/api/vehiculos/<id>/` | Actualizar vehículo | 200 OK / 400 Bad Request |
+| DELETE | `/api/vehiculos/<id>/` | Eliminar vehículo | 204 No Content |
+
+## 7. Módulos Creados
+- **Backend**: `VehiculoSerializer`, `VehiculoViewSet`, `DefaultRouter` y configuración de CORS en `settings.py`.
+- **Frontend**: `client.js` para peticiones HTTP centralizadas, `VehiculoList.jsx` y `VehiculoForm.jsx`.
+
+## 8. Capturas del Flujo CRUD
+- **Listado y Operatividad**: `![Listado](docs\img\LAB8\Captura de pantalla 2026-10-06 110253.png)`
+- **Validación del Servidor**: `![Errores](docs\img\LAB8\Captura de pantalla 2026-10-06 112023.png)`
