@@ -1,43 +1,66 @@
-import { useEffect, useState } from 'react'
-import './App.css'
+import { useCallback, useEffect, useState } from "react";
+import { vehiculosApi } from "./api/client";
+import VehiculoList from "./components/VehiculoList";
+import VehiculoForm from "./components/VehiculoForm";
+import "./App.css";
 
-function App() {
-  const [vehiculos, setVehiculos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+export default function App() {
+  const [vehiculos, setVehiculos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const [editando, setEditando] = useState(null);
+
+  const cargar = useCallback(async () => {
+    try {
+      setError(null);
+      setCargando(true);
+      const datos = await vehiculosApi.listar();
+      setVehiculos(datos.results ?? datos);
+    } catch (e) {
+      setError("No se pudo cargar la lista de vehículos. ¿Está encendido Django?");
+    } finally {
+      setCargando(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetch('/api/vehiculos/')
-      .then((res) => {
-        if (!res.ok) throw new Error('Error al conectar con la API')
-        return res.json()
-      })
-      .then((data) => {
-        setVehiculos(data.results)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [])
+    cargar();
+  }, [cargar]);
+
+  const handleGuardado = () => {
+    setEditando(null);
+    cargar();
+  };
+
+  const handleEliminar = async (v) => {
+    if (!window.confirm(`¿Eliminar el vehículo patente "${v.patente}"?`)) return;
+    try {
+      await vehiculosApi.eliminar(v.id);
+      cargar();
+    } catch (e) {
+      setError("No se pudo eliminar el vehículo.");
+    }
+  };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>Gestión de Flota - Control de Vehículos</h1>
-      {loading && <p>Cargando vehículos...</p>}
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-      {!loading && !error && (
-        <ul>
-          {vehiculos.map((v) => (
-            <li key={v.id}>
-              <strong>{v.patente}</strong> - {v.marca} {v.modelo} (Km: {v.kilometraje_actual})
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
+    <main className="contenedor">
+      <h1>Gestión de Flota y Control de Vehículos</h1>
 
-export default App
+      <VehiculoForm
+        vehiculo={editando}
+        onGuardado={handleGuardado}
+        onCancelar={() => setEditando(null)}
+      />
+
+      {cargando && <p className="aviso">Cargando flota...</p>}
+      {error && <p className="aviso error">{error}</p>}
+      {!cargando && !error && (
+        <VehiculoList
+          vehiculos={vehiculos}
+          onEditar={setEditando}
+          onEliminar={handleEliminar}
+        />
+      )}
+    </main>
+  );
+}
