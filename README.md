@@ -40,7 +40,7 @@ Proyecto_Flota_desarrollo_web/
 │   └── vite.config.js   # Configurado con proxy hacia Django
 ├── docs/img/            # Capturas de evidencia
 └── .gitignore
-
+```
 ## 6. Arquitectura de Integración
 Flujo: Navegador -> React (`http://localhost:5173`) -> Proxy Vite (`/api`) -> Django REST Framework (`http://127.0.0.1:8000`) -> SQLite.
 
