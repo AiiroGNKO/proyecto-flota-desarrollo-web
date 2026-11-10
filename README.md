@@ -40,6 +40,10 @@ Proyecto_Flota_desarrollo_web/
 │   └── vite.config.js   # Configurado con proxy hacia Django
 ├── docs/img/            # Capturas de evidencia
 └── .gitignore
+<<<<<<< HEAD
+=======
+```
+>>>>>>> 03ea3c0cb3f8e3815d48aa145839d78f6caa7666
 
 ## 6. Arquitectura de Integración
 Flujo: Navegador -> React (`http://localhost:5173`) -> Proxy Vite (`/api`) -> Django REST Framework (`http://127.0.0.1:8000`) -> SQLite.
@@ -57,5 +61,10 @@ Flujo: Navegador -> React (`http://localhost:5173`) -> Proxy Vite (`/api`) -> Dj
 - **Frontend**: `client.js` para peticiones HTTP centralizadas, `VehiculoList.jsx` y `VehiculoForm.jsx`.
 
 ## 8. Capturas del Flujo CRUD
+<<<<<<< HEAD
 - **Listado y Operatividad**: `![Listado](docs\img\LAB8\Captura de pantalla 2026-10-06 110253.png)`
 - **Validación del Servidor**: `![Errores](docs\img\LAB8\Captura de pantalla 2026-10-06 112023.png)`deac
+=======
+- **Listado y Operatividad**: ![Listado](docs/img/LAB8/Captura%20de%20pantalla%202026-10-06%20110253.png)
+- **Validación del Servidor**: ![Errores](docs/img/LAB8/Captura%20de%20pantalla%202026-10-06%20112023.png)
+>>>>>>> 03ea3c0cb3f8e3815d48aa145839d78f6caa7666
