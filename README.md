@@ -58,4 +58,4 @@ Flujo: Navegador -> React (`http://localhost:5173`) -> Proxy Vite (`/api`) -> Dj
 
 ## 8. Capturas del Flujo CRUD
 - **Listado y Operatividad**: `![Listado](docs\img\LAB8\Captura de pantalla 2026-10-06 110253.png)`
-- **Validación del Servidor**: `![Errores](docs\img\LAB8\Captura de pantalla 2026-10-06 112023.png)`
+- **Validación del Servidor**: `![Errores](docs\img\LAB8\Captura de pantalla 2026-10-06 112023.png)`deac
