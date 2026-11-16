@@ -1,11 +1,23 @@
-// frontend/src/api/client.js
 const BASE = "/api";
+const TOKEN_KEY = "flota_access_token";
+
+export const obtenerToken = () => localStorage.getItem(TOKEN_KEY);
+export const guardarToken = (token) => localStorage.setItem(TOKEN_KEY, token);
+export const limpiarToken = () => localStorage.removeItem(TOKEN_KEY);
 
 async function request(ruta, opciones = {}) {
   const { headers, ...resto } = opciones;
+  const token = obtenerToken();
+
+  const cabeceras = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...headers,
+  };
+
   const respuesta = await fetch(BASE + ruta, {
     ...resto,
-    headers: { "Content-Type": "application/json", ...headers },
+    headers: cabeceras,
   });
 
   if (!respuesta.ok) {
@@ -13,7 +25,7 @@ async function request(ruta, opciones = {}) {
     try {
       detalle = await respuesta.json();
     } catch {
-      // Ignorar si no trajo cuerpo JSON
+      // Sin cuerpo JSON
     }
     const error = new Error("Error " + respuesta.status);
     error.status = respuesta.status;
@@ -25,11 +37,42 @@ async function request(ruta, opciones = {}) {
   return respuesta.json();
 }
 
+export const authApi = {
+  login: async (username, password) => {
+    const data = await request("/auth/login/", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    });
+    guardarToken(data.access);
+    return data.usuario;
+  },
+  me: () => request("/auth/me/"),
+  logout: () => {
+    limpiarToken();
+  },
+};
+
 export const vehiculosApi = {
   listar: () => request("/vehiculos/"),
-  crear: (datos) =>
-    request("/vehiculos/", { method: "POST", body: JSON.stringify(datos) }),
-  actualizar: (id, datos) =>
-    request("/vehiculos/" + id + "/", { method: "PUT", body: JSON.stringify(datos) }),
+  crear: (datos) => request("/vehiculos/", { method: "POST", body: JSON.stringify(datos) }),
+  actualizar: (id, datos) => request("/vehiculos/" + id + "/", { method: "PUT", body: JSON.stringify(datos) }),
   eliminar: (id) => request("/vehiculos/" + id + "/", { method: "DELETE" }),
+};
+
+export const talleresApi = {
+  listar: () => request("/talleres/"),
+  crear: (datos) => request("/talleres/", { method: "POST", body: JSON.stringify(datos) }),
+  eliminar: (id) => request("/talleres/" + id + "/", { method: "DELETE" }),
+};
+
+export const cargasCombustibleApi = {
+  listar: () => request("/cargas-combustible/"),
+  crear: (datos) => request("/cargas-combustible/", { method: "POST", body: JSON.stringify(datos) }),
+  eliminar: (id) => request("/cargas-combustible/" + id + "/", { method: "DELETE" }),
+};
+
+export const mantencionesApi = {
+  listar: () => request("/mantenciones/"),
+  crear: (datos) => request("/mantenciones/", { method: "POST", body: JSON.stringify(datos) }),
+  eliminar: (id) => request("/mantenciones/" + id + "/", { method: "DELETE" }),
 };
