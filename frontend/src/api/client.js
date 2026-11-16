@@ -88,3 +88,7 @@ export const viajesApi = {
   crear: (datos) => request("/viajes/", { method: "POST", body: JSON.stringify(datos) }),
   eliminar: (id) => request("/viajes/" + id + "/", { method: "DELETE" }),
 };
+
+export const dashboardApi = {
+  obtenerKpis: () => request("/dashboard/kpis/"),
+};
