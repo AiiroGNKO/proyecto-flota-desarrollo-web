@@ -3,7 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   authApi,
+  dashboardApi,
   vehiculosApi,
+  cargasCombustibleApi,
   mantencionesApi,
   talleresApi,
   conductoresApi,
@@ -12,8 +14,10 @@ import {
 } from "./api/client";
 
 import LoginForm from "./components/LoginForm";
+import DashboardSection from "./components/DashboardSection";
 import VehiculoList from "./components/VehiculoList";
 import VehiculoForm from "./components/VehiculoForm";
+import CombustibleSection from "./components/CombustibleSection";
 import MantencionList from "./components/MantencionList";
 import MantencionForm from "./components/MantencionForm";
 import TallerSection from "./components/TallerSection";
@@ -29,23 +33,33 @@ export default function App() {
 
   const [usuario, setUsuario] = useState(null);
 
+  // Verifica si existe un token antes de mostrar la aplicación.
   const [verificandoSesion, setVerificandoSesion] = useState(
     () => Boolean(obtenerToken())
   );
 
-  const [vistaActiva, setVistaActiva] = useState("vehiculos");
+  // Módulo activo
+  const [vistaActiva, setVistaActiva] = useState("dashboard");
 
+  // Información del dashboard
+  const [kpis, setKpis] = useState(null);
+
+  // Información de los módulos
   const [vehiculos, setVehiculos] = useState([]);
+  const [cargas, setCargas] = useState([]);
   const [mantenciones, setMantenciones] = useState([]);
   const [talleres, setTalleres] = useState([]);
   const [conductores, setConductores] = useState([]);
   const [viajes, setViajes] = useState([]);
 
+  // Estados de interfaz
   const [cargando, setCargando] = useState(
     () => Boolean(obtenerToken())
   );
 
   const [error, setError] = useState(null);
+
+  // Vehículo seleccionado para edición
   const [editandoVehiculo, setEditandoVehiculo] = useState(null);
 
 
@@ -54,20 +68,26 @@ export default function App() {
   // =====================================================
 
   const cerrarSesion = useCallback(() => {
+
     authApi.logout();
 
+    // Limpiar usuario
     setUsuario(null);
 
+    // Limpiar información del sistema
+    setKpis(null);
     setVehiculos([]);
+    setCargas([]);
     setMantenciones([]);
     setTalleres([]);
     setConductores([]);
     setViajes([]);
 
+    // Limpiar estados de interfaz
     setEditandoVehiculo(null);
-
     setError(null);
     setCargando(false);
+
   }, []);
 
 
@@ -77,11 +97,14 @@ export default function App() {
 
   useEffect(() => {
 
+    // Si no existe token, el estado inicial ya indica
+    // que no hay una sesión que verificar.
     if (!obtenerToken()) return;
 
     let cancelado = false;
 
     const validarSesion = async () => {
+
       try {
         const perfil = await authApi.me();
 
@@ -90,11 +113,13 @@ export default function App() {
         }
 
       } catch {
+
         if (!cancelado) {
           cerrarSesion();
         }
 
       } finally {
+
         if (!cancelado) {
           setVerificandoSesion(false);
         }
@@ -103,6 +128,7 @@ export default function App() {
 
     validarSesion();
 
+    // Evitar actualizar estados si el componente se desmonta.
     return () => {
       cancelado = true;
     };
@@ -111,27 +137,38 @@ export default function App() {
 
 
   // =====================================================
-  // 4. CONSULTA DE DATOS A LA API
+  // 4. CONSULTA CENTRALIZADA DE DATOS
   // =====================================================
+
+  // Esta función consulta todos los endpoints del sistema.
+  // No modifica directamente los estados de React.
 
   const consultarDatos = useCallback(async () => {
 
     const [
+      dataKpis,
       dataVehiculos,
+      dataCargas,
       dataMantenciones,
       dataTalleres,
       dataConductores,
       dataViajes,
     ] = await Promise.all([
+
+      dashboardApi.obtenerKpis(),
       vehiculosApi.listar(),
+      cargasCombustibleApi.listar(),
       mantencionesApi.listar(),
       talleresApi.listar(),
       conductoresApi.listar(),
       viajesApi.listar(),
+
     ]);
 
     return {
+      kpis: dataKpis,
       vehiculos: dataVehiculos.results ?? dataVehiculos,
+      cargas: dataCargas.results ?? dataCargas,
       mantenciones: dataMantenciones.results ?? dataMantenciones,
       talleres: dataTalleres.results ?? dataTalleres,
       conductores: dataConductores.results ?? dataConductores,
@@ -147,17 +184,24 @@ export default function App() {
 
   useEffect(() => {
 
+    // Esperar a que exista una sesión válida.
     if (!usuario) return;
 
     let cancelado = false;
 
     const cargarDatosIniciales = async () => {
+
       try {
+
+        // Consultar todos los endpoints.
         const datos = await consultarDatos();
 
         if (cancelado) return;
 
+        // Actualizar los estados con la información recibida.
+        setKpis(datos.kpis);
         setVehiculos(datos.vehiculos);
+        setCargas(datos.cargas);
         setMantenciones(datos.mantenciones);
         setTalleres(datos.talleres);
         setConductores(datos.conductores);
@@ -166,6 +210,7 @@ export default function App() {
         setError(null);
 
       } catch (err) {
+
         if (cancelado) return;
 
         if (err?.status === 401) {
@@ -177,6 +222,7 @@ export default function App() {
         }
 
       } finally {
+
         if (!cancelado) {
           setCargando(false);
         }
@@ -196,6 +242,9 @@ export default function App() {
   // 6. RECARGA DE INFORMACIÓN
   // =====================================================
 
+  // Se ejecuta después de registrar, editar o eliminar
+  // información en cualquiera de los módulos.
+
   const cargarTodo = useCallback(async () => {
 
     if (!usuario) return;
@@ -204,9 +253,12 @@ export default function App() {
     setCargando(true);
 
     try {
+
       const datos = await consultarDatos();
 
+      setKpis(datos.kpis);
       setVehiculos(datos.vehiculos);
+      setCargas(datos.cargas);
       setMantenciones(datos.mantenciones);
       setTalleres(datos.talleres);
       setConductores(datos.conductores);
@@ -223,6 +275,7 @@ export default function App() {
       }
 
     } finally {
+
       setCargando(false);
     }
 
@@ -234,9 +287,13 @@ export default function App() {
   // =====================================================
 
   const handleLoginExitoso = (user) => {
+
     setError(null);
     setCargando(true);
+
+    // Al actualizar usuario, se ejecutará la carga inicial.
     setUsuario(user);
+
   };
 
 
@@ -245,9 +302,12 @@ export default function App() {
   // =====================================================
 
   const handleVehiculoGuardado = () => {
+
     setEditandoVehiculo(null);
     cargarTodo();
+
   };
+
 
   const handleEliminarVehiculo = async (vehiculo) => {
 
@@ -258,7 +318,9 @@ export default function App() {
     if (!confirmar) return;
 
     try {
+
       await vehiculosApi.eliminar(vehiculo.id);
+
       await cargarTodo();
 
     } catch (err) {
@@ -285,7 +347,9 @@ export default function App() {
     if (!confirmar) return;
 
     try {
+
       await mantencionesApi.eliminar(mantencion.id);
+
       await cargarTodo();
 
     } catch (err) {
@@ -304,11 +368,14 @@ export default function App() {
   // =====================================================
 
   if (verificandoSesion) {
+
     return (
       <main className="contenedor">
+
         <p className="aviso">
           Verificando credenciales...
         </p>
+
       </main>
     );
   }
@@ -319,6 +386,7 @@ export default function App() {
   // =====================================================
 
   if (!usuario) {
+
     return (
       <main className="contenedor">
 
@@ -351,9 +419,13 @@ export default function App() {
   // =====================================================
 
   return (
+
     <main className="contenedor">
 
-      {/* ENCABEZADO */}
+
+      {/* ================================================
+          ENCABEZADO Y USUARIO
+         ================================================ */}
 
       <header className="topbar">
 
@@ -388,9 +460,12 @@ export default function App() {
       </header>
 
 
-      {/* ALERTAS PREVENTIVAS */}
+      {/* ================================================
+          ALERTAS PREVENTIVAS
+         ================================================ */}
 
       {alertasPreventivas.length > 0 && (
+
         <div className="aviso error">
 
           <strong>
@@ -406,12 +481,27 @@ export default function App() {
             .join(" | ")}
 
         </div>
+
       )}
 
 
-      {/* NAVEGACIÓN ENTRE MÓDULOS */}
+      {/* ================================================
+          NAVEGACIÓN ENTRE MÓDULOS
+         ================================================ */}
 
-      <nav className="tabs">
+      <nav
+        className="tabs"
+        style={{ flexWrap: "wrap" }}
+      >
+
+        <button
+          className={
+            vistaActiva === "dashboard" ? "tab-activa" : ""
+          }
+          onClick={() => setVistaActiva("dashboard")}
+        >
+          Dashboard KPIs
+        </button>
 
         <button
           className={
@@ -424,20 +514,11 @@ export default function App() {
 
         <button
           className={
-            vistaActiva === "mantenciones" ? "tab-activa" : ""
+            vistaActiva === "combustible" ? "tab-activa" : ""
           }
-          onClick={() => setVistaActiva("mantenciones")}
+          onClick={() => setVistaActiva("combustible")}
         >
-          2. Bitácora de Mantenciones ({mantenciones.length})
-        </button>
-
-        <button
-          className={
-            vistaActiva === "talleres" ? "tab-activa" : ""
-          }
-          onClick={() => setVistaActiva("talleres")}
-        >
-          3. Talleres Asociados ({talleres.length})
+          2. Combustible ({cargas.length})
         </button>
 
         <button
@@ -446,46 +527,88 @@ export default function App() {
           }
           onClick={() => setVistaActiva("rutas")}
         >
-          4. Rutas y Conductores ({viajes.length})
+          3. Rutas y Conductores ({viajes.length})
+        </button>
+
+        <button
+          className={
+            vistaActiva === "mantenciones" ? "tab-activa" : ""
+          }
+          onClick={() => setVistaActiva("mantenciones")}
+        >
+          4. Mantenciones ({mantenciones.length})
+        </button>
+
+        <button
+          className={
+            vistaActiva === "talleres" ? "tab-activa" : ""
+          }
+          onClick={() => setVistaActiva("talleres")}
+        >
+          5. Talleres ({talleres.length})
         </button>
 
       </nav>
 
 
-      {/* INDICADORES DE CARGA Y ERRORES */}
+      {/* ================================================
+          INDICADORES DE CARGA Y ERRORES
+         ================================================ */}
 
       {cargando && (
+
         <p className="aviso">
           Sincronizando datos de la flota...
         </p>
+
       )}
 
       {error && (
+
         <p className="aviso error">
           {error}
         </p>
+
       )}
 
 
-      {/* =================================================
-          MÓDULO 1: VEHÍCULOS
-         ================================================= */}
+      {/* ================================================
+          MÓDULO 0: DASHBOARD DE INDICADORES
+         ================================================ */}
+
+      {!cargando && !error && vistaActiva === "dashboard" && (
+
+        <DashboardSection
+          kpis={kpis}
+        />
+
+      )}
+
+
+      {/* ================================================
+          MÓDULO 1: FLOTA Y DOCUMENTACIÓN
+         ================================================ */}
 
       {!cargando && !error && vistaActiva === "vehiculos" && (
+
         <section>
 
           {usuario.es_admin ? (
+
             <VehiculoForm
               key={editandoVehiculo?.id ?? "nuevo"}
               vehiculo={editandoVehiculo}
               onGuardado={handleVehiculoGuardado}
               onCancelar={() => setEditandoVehiculo(null)}
             />
+
           ) : (
+
             <p className="aviso">
               Modo Operador: visualización de flota activa
               (alta/edición solo Administrador).
             </p>
+
           )}
 
           <VehiculoList
@@ -496,14 +619,48 @@ export default function App() {
           />
 
         </section>
+
       )}
 
 
-      {/* =================================================
-          MÓDULO 2: MANTENCIONES
-         ================================================= */}
+      {/* ================================================
+          MÓDULO 2: COMBUSTIBLE
+         ================================================ */}
+
+      {!cargando && !error && vistaActiva === "combustible" && (
+
+        <CombustibleSection
+          vehiculos={vehiculos}
+          cargas={cargas}
+          onGuardado={cargarTodo}
+        />
+
+      )}
+
+
+      {/* ================================================
+          MÓDULO 3: RUTAS Y CONDUCTORES
+         ================================================ */}
+
+      {!cargando && !error && vistaActiva === "rutas" && (
+
+        <RutasConductoresSection
+          vehiculos={vehiculos}
+          conductores={conductores}
+          viajes={viajes}
+          esAdmin={usuario.es_admin}
+          onGuardado={cargarTodo}
+        />
+
+      )}
+
+
+      {/* ================================================
+          MÓDULO 4: MANTENCIONES
+         ================================================ */}
 
       {!cargando && !error && vistaActiva === "mantenciones" && (
+
         <section>
 
           <MantencionForm
@@ -518,34 +675,22 @@ export default function App() {
           />
 
         </section>
+
       )}
 
 
-      {/* =================================================
-          MÓDULO 3: TALLERES ASOCIADOS
-         ================================================= */}
+      {/* ================================================
+          MÓDULO 5: TALLERES ASOCIADOS
+         ================================================ */}
 
       {!cargando && !error && vistaActiva === "talleres" && (
+
         <TallerSection
           talleres={talleres}
           esAdmin={usuario.es_admin}
           onGuardado={cargarTodo}
         />
-      )}
 
-
-      {/* =================================================
-          MÓDULO 4: RUTAS Y CONDUCTORES
-         ================================================= */}
-
-      {!cargando && !error && vistaActiva === "rutas" && (
-        <RutasConductoresSection
-          vehiculos={vehiculos}
-          conductores={conductores}
-          viajes={viajes}
-          esAdmin={usuario.es_admin}
-          onGuardado={cargarTodo}
-        />
       )}
 
     </main>

@@ -27,3 +27,22 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .user-info { display: flex; align-items: center; gap: 0.8rem; }
 .login-wrapper { display: flex; justify-content: center; margin-top: 2rem; }
 .login-card { width: 100%; max-width: 420px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.2rem 0; }
+.kpi-card { background: #fafafa; border: 1px solid #ccd; border-radius: 6px; padding: 1rem; display: grid; gap: 0.3rem; }
+.kpi-destacado { background: #EAF4F4; border-left: 5px solid #1A8A8A; }
+.kpi-titulo { font-size: 0.85rem; font-weight: 700; color: #555; text-transform: uppercase; }
+.kpi-valor { font-size: 1.45rem; color: #1F3A5F; }
+.dashboard-dos-columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.2rem; margin-top: 1.5rem; }
+.panel-grafico { background: #fff; border: 1px solid #ccd; border-radius: 6px; padding: 1.1rem; }
+.barras-lista { display: grid; gap: 0.9rem; margin-top: 1rem; }
+.barra-item { display: grid; gap: 0.3rem; }
+.barra-header { display: flex; justify-content: space-between; font-size: 0.9rem; }
+.barra-fondo { width: 100%; height: 14px; background: #eef2f7; border-radius: 7px; overflow: hidden; }
+.barra-relleno { height: 100%; border-radius: 7px; transition: width 0.3s ease; }
+.barra-azul { background: #1F3A5F; }
+.barra-verde { background: #1A8A8A; }
+.barra-naranja { background: #D35400; }
+.comparativa-extremos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.8rem; }
+.extremo-box { padding: 0.6rem; border-radius: 4px; display: grid; gap: 0.15rem; font-size: 0.88rem; }
+.extremo-mejor { background: #D4EDDA; color: #155724; }
+.extremo-menor { background: #FFF3CD; color: #856404; }
