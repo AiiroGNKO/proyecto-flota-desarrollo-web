@@ -6,6 +6,8 @@ import {
   vehiculosApi,
   mantencionesApi,
   talleresApi,
+  conductoresApi,
+  viajesApi,
   obtenerToken,
 } from "./api/client";
 
@@ -15,17 +17,18 @@ import VehiculoForm from "./components/VehiculoForm";
 import MantencionList from "./components/MantencionList";
 import MantencionForm from "./components/MantencionForm";
 import TallerSection from "./components/TallerSection";
+import RutasConductoresSection from "./components/RutasConductoresSection";
 
 import "./App.css";
 
 export default function App() {
+
   // =====================================================
   // 1. ESTADOS PRINCIPALES
   // =====================================================
 
   const [usuario, setUsuario] = useState(null);
 
-  // Si existe un token, inicialmente debemos verificar la sesión.
   const [verificandoSesion, setVerificandoSesion] = useState(
     () => Boolean(obtenerToken())
   );
@@ -35,8 +38,9 @@ export default function App() {
   const [vehiculos, setVehiculos] = useState([]);
   const [mantenciones, setMantenciones] = useState([]);
   const [talleres, setTalleres] = useState([]);
+  const [conductores, setConductores] = useState([]);
+  const [viajes, setViajes] = useState([]);
 
-  // Si existe un token, probablemente tendremos que cargar información.
   const [cargando, setCargando] = useState(
     () => Boolean(obtenerToken())
   );
@@ -57,6 +61,8 @@ export default function App() {
     setVehiculos([]);
     setMantenciones([]);
     setTalleres([]);
+    setConductores([]);
+    setViajes([]);
 
     setEditandoVehiculo(null);
 
@@ -70,8 +76,7 @@ export default function App() {
   // =====================================================
 
   useEffect(() => {
-    // Si no existe token, el estado inicial ya indica
-    // que no necesitamos verificar ninguna sesión.
+
     if (!obtenerToken()) return;
 
     let cancelado = false;
@@ -98,7 +103,6 @@ export default function App() {
 
     validarSesion();
 
-    // Evita actualizar estados si el componente se desmonta.
     return () => {
       cancelado = true;
     };
@@ -110,24 +114,28 @@ export default function App() {
   // 4. CONSULTA DE DATOS A LA API
   // =====================================================
 
-  // Centralizamos las consultas para reutilizarlas.
-  // Esta función no modifica directamente ningún estado.
-
   const consultarDatos = useCallback(async () => {
+
     const [
       dataVehiculos,
       dataMantenciones,
       dataTalleres,
+      dataConductores,
+      dataViajes,
     ] = await Promise.all([
       vehiculosApi.listar(),
       mantencionesApi.listar(),
       talleresApi.listar(),
+      conductoresApi.listar(),
+      viajesApi.listar(),
     ]);
 
     return {
       vehiculos: dataVehiculos.results ?? dataVehiculos,
       mantenciones: dataMantenciones.results ?? dataMantenciones,
       talleres: dataTalleres.results ?? dataTalleres,
+      conductores: dataConductores.results ?? dataConductores,
+      viajes: dataViajes.results ?? dataViajes,
     };
 
   }, []);
@@ -138,22 +146,22 @@ export default function App() {
   // =====================================================
 
   useEffect(() => {
-    // No solicitamos información si no hay sesión iniciada.
+
     if (!usuario) return;
 
     let cancelado = false;
 
     const cargarDatosIniciales = async () => {
       try {
-        // Primero esperamos la respuesta de Django.
         const datos = await consultarDatos();
 
         if (cancelado) return;
 
-        // Actualizamos los estados después de recibir los datos.
         setVehiculos(datos.vehiculos);
         setMantenciones(datos.mantenciones);
         setTalleres(datos.talleres);
+        setConductores(datos.conductores);
+        setViajes(datos.viajes);
 
         setError(null);
 
@@ -188,10 +196,8 @@ export default function App() {
   // 6. RECARGA DE INFORMACIÓN
   // =====================================================
 
-  // Esta función se utiliza después de crear, editar
-  // o eliminar registros mediante acciones del usuario.
-
   const cargarTodo = useCallback(async () => {
+
     if (!usuario) return;
 
     setError(null);
@@ -203,8 +209,11 @@ export default function App() {
       setVehiculos(datos.vehiculos);
       setMantenciones(datos.mantenciones);
       setTalleres(datos.talleres);
+      setConductores(datos.conductores);
+      setViajes(datos.viajes);
 
     } catch (err) {
+
       if (err?.status === 401) {
         cerrarSesion();
       } else {
@@ -241,6 +250,7 @@ export default function App() {
   };
 
   const handleEliminarVehiculo = async (vehiculo) => {
+
     const confirmar = window.confirm(
       `¿Eliminar el vehículo patente "${vehiculo.patente}"?`
     );
@@ -249,10 +259,10 @@ export default function App() {
 
     try {
       await vehiculosApi.eliminar(vehiculo.id);
-
       await cargarTodo();
 
     } catch (err) {
+
       if (err?.status === 401) {
         cerrarSesion();
       } else {
@@ -267,6 +277,7 @@ export default function App() {
   // =====================================================
 
   const handleEliminarMantencion = async (mantencion) => {
+
     const confirmar = window.confirm(
       `¿Eliminar la mantención del ${mantencion.fecha} para ${mantencion.patente_vehiculo}?`
     );
@@ -275,10 +286,10 @@ export default function App() {
 
     try {
       await mantencionesApi.eliminar(mantencion.id);
-
       await cargarTodo();
 
     } catch (err) {
+
       if (err?.status === 401) {
         cerrarSesion();
       } else {
@@ -342,7 +353,8 @@ export default function App() {
   return (
     <main className="contenedor">
 
-      {/* Encabezado y usuario */}
+      {/* ENCABEZADO */}
+
       <header className="topbar">
 
         <div>
@@ -376,7 +388,8 @@ export default function App() {
       </header>
 
 
-      {/* Alertas preventivas */}
+      {/* ALERTAS PREVENTIVAS */}
+
       {alertasPreventivas.length > 0 && (
         <div className="aviso error">
 
@@ -396,7 +409,8 @@ export default function App() {
       )}
 
 
-      {/* Navegación entre módulos */}
+      {/* NAVEGACIÓN ENTRE MÓDULOS */}
+
       <nav className="tabs">
 
         <button
@@ -426,10 +440,20 @@ export default function App() {
           3. Talleres Asociados ({talleres.length})
         </button>
 
+        <button
+          className={
+            vistaActiva === "rutas" ? "tab-activa" : ""
+          }
+          onClick={() => setVistaActiva("rutas")}
+        >
+          4. Rutas y Conductores ({viajes.length})
+        </button>
+
       </nav>
 
 
-      {/* Indicadores de carga y errores */}
+      {/* INDICADORES DE CARGA Y ERRORES */}
+
       {cargando && (
         <p className="aviso">
           Sincronizando datos de la flota...
@@ -449,9 +473,6 @@ export default function App() {
 
       {!cargando && !error && vistaActiva === "vehiculos" && (
         <section>
-
-          {/* Solo los administradores pueden registrar
-              o editar vehículos. */}
 
           {usuario.es_admin ? (
             <VehiculoForm
@@ -501,12 +522,27 @@ export default function App() {
 
 
       {/* =================================================
-          MÓDULO 3: TALLERES
+          MÓDULO 3: TALLERES ASOCIADOS
          ================================================= */}
 
       {!cargando && !error && vistaActiva === "talleres" && (
         <TallerSection
           talleres={talleres}
+          esAdmin={usuario.es_admin}
+          onGuardado={cargarTodo}
+        />
+      )}
+
+
+      {/* =================================================
+          MÓDULO 4: RUTAS Y CONDUCTORES
+         ================================================= */}
+
+      {!cargando && !error && vistaActiva === "rutas" && (
+        <RutasConductoresSection
+          vehiculos={vehiculos}
+          conductores={conductores}
+          viajes={viajes}
           esAdmin={usuario.es_admin}
           onGuardado={cargarTodo}
         />

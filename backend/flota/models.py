@@ -106,3 +106,49 @@ class Mantencion(models.Model):
 
     def __str__(self):
         return f"[{self.tipo}] {self.vehiculo.patente} - {self.fecha} (${self.costo_total_clp})"
+    
+class Conductor(models.Model):
+    """Entidad que representa a un conductor habilitado para operar la flota."""
+    LICENCIA_CHOICES = [
+        ("B", "Clase B (Vehículos Livianos)"),
+        ("A2", "Clase A2 (Transporte de Pasajeros / Menor)"),
+        ("A4", "Clase A4 (Carga Simple > 3.500 kg)"),
+        ("A5", "Clase A5 (Carga Articulada / Tractocamiones)"),
+    ]
+
+    nombre = models.CharField(max_length=100)
+    rut = models.CharField(max_length=15, unique=True)
+    licencia_clase = models.CharField(max_length=5, choices=LICENCIA_CHOICES, default="A4")
+    vencimiento_licencia = models.DateField(null=True, blank=True, verbose_name="Vencimiento Licencia")
+    telefono = models.CharField(max_length=25, blank=True, default="")
+    activo = models.BooleanField(default=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["nombre"]
+        verbose_name = "Conductor"
+        verbose_name_plural = "Conductores"
+
+    def __str__(self):
+        return f"{self.nombre} ({self.rut}) - Clase {self.licencia_clase}"
+
+
+class Viaje(models.Model):
+    """Bitácora operativa de rutas y despachos realizados por la flota."""
+    vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE, related_name="viajes")
+    conductor = models.ForeignKey(Conductor, on_delete=models.SET_NULL, null=True, blank=True, related_name="viajes")
+    origen = models.CharField(max_length=100)
+    destino = models.CharField(max_length=100)
+    fecha = models.DateField()
+    kilometraje_inicial = models.IntegerField()
+    kilometraje_final = models.IntegerField()
+    carga_descripcion = models.CharField(max_length=150, blank=True, default="")
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-fecha", "-id"]
+        verbose_name = "Viaje / Ruta"
+        verbose_name_plural = "Viajes / Rutas"
+
+    def __str__(self):
+        return f"{self.vehiculo.patente}: {self.origen} -> {self.destino} ({self.fecha})"

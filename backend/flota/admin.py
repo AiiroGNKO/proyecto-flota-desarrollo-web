@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Vehiculo, carga_combustible, Taller, Mantencion
+from .models import Vehiculo, carga_combustible, Taller, Mantencion, Conductor, Viaje
 
 
 @admin.register(Vehiculo)
@@ -37,3 +37,16 @@ class MantencionAdmin(admin.ModelAdmin):
     )
     list_filter = ("tipo", "fecha", "taller", "vehiculo")
     search_fields = ("vehiculo__patente", "descripcion", "taller__nombre")
+
+@admin.register(Conductor)
+class ConductorAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "rut", "licencia_clase", "vencimiento_licencia", "telefono", "activo")
+    list_filter = ("activo", "licencia_clase")
+    search_fields = ("nombre", "rut")
+
+
+@admin.register(Viaje)
+class ViajeAdmin(admin.ModelAdmin):
+    list_display = ("fecha", "vehiculo", "conductor", "origen", "destino", "kilometraje_inicial", "kilometraje_final")
+    list_filter = ("fecha", "vehiculo", "conductor")
+    search_fields = ("vehiculo__patente", "conductor__nombre", "origen", "destino")

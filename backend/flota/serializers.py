@@ -2,7 +2,7 @@ import re
 from datetime import date
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import Vehiculo, carga_combustible, Taller, Mantencion
+from .models import Vehiculo, carga_combustible, Taller, Mantencion, Conductor, Viaje
 
 CALENDARIO_PRT_CHILE = {
     "0": "Febrero",
@@ -16,7 +16,6 @@ CALENDARIO_PRT_CHILE = {
     "8": "Noviembre",
     "9": "Diciembre",
 }
-
 
 def evaluar_semaforo_fecha(fecha_vencimiento):
     if not fecha_vencimiento:
@@ -271,3 +270,88 @@ class MantencionSerializer(serializers.ModelSerializer):
             vehiculo.save()
 
         return mantencion
+
+class ConductorSerializer(serializers.ModelSerializer):
+    estado_licencia = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Conductor
+        fields = [
+            "id",
+            "nombre",
+            "rut",
+            "licencia_clase",
+            "vencimiento_licencia",
+            "estado_licencia",
+            "telefono",
+            "activo",
+            "creado_en",
+        ]
+        read_only_fields = ["id", "creado_en"]
+
+    def validate_rut(self, value):
+        return value.upper().strip()
+
+    def get_estado_licencia(self, obj):
+        return evaluar_semaforo_fecha(obj.vencimiento_licencia)
+
+
+class ViajeSerializer(serializers.ModelSerializer):
+    patente_vehiculo = serializers.ReadOnlyField(source="vehiculo.patente")
+    marca_modelo = serializers.SerializerMethodField()
+    nombre_conductor = serializers.SerializerMethodField()
+    km_recorridos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Viaje
+        fields = [
+            "id",
+            "vehiculo",
+            "patente_vehiculo",
+            "marca_modelo",
+            "conductor",
+            "nombre_conductor",
+            "origen",
+            "destino",
+            "fecha",
+            "kilometraje_inicial",
+            "kilometraje_final",
+            "km_recorridos",
+            "carga_descripcion",
+            "creado_en",
+        ]
+        read_only_fields = ["id", "creado_en"]
+
+    def get_marca_modelo(self, obj):
+        return f"{obj.vehiculo.marca} {obj.vehiculo.modelo}"
+
+    def get_nombre_conductor(self, obj):
+        return f"{obj.conductor.nombre} ({obj.conductor.licencia_clase})" if obj.conductor else "Sin asignar"
+
+    def get_km_recorridos(self, obj):
+        return max(0, obj.kilometraje_final - obj.kilometraje_inicial)
+
+    def validate(self, attrs):
+        vehiculo = attrs.get("vehiculo")
+        km_ini = attrs.get("kilometraje_inicial")
+        km_fin = attrs.get("kilometraje_final")
+
+        if km_ini is not None and km_fin is not None and km_fin <= km_ini:
+            raise serializers.ValidationError({
+                "kilometraje_final": "El kilometraje final debe ser mayor que el kilometraje inicial."
+            })
+
+        if vehiculo and km_ini is not None and km_ini < vehiculo.kilometraje_actual:
+            raise serializers.ValidationError({
+                "kilometraje_inicial": f"El kilometraje inicial ({km_ini} km) no puede ser menor al actual del vehículo ({vehiculo.kilometraje_actual} km)."
+            })
+
+        return attrs
+
+    def create(self, validated_data):
+        viaje = super().create(validated_data)
+        vehiculo = viaje.vehiculo
+        if viaje.kilometraje_final > vehiculo.kilometraje_actual:
+            vehiculo.kilometraje_actual = viaje.kilometraje_final
+            vehiculo.save()
+        return viaje

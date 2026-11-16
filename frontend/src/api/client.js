@@ -76,3 +76,15 @@ export const mantencionesApi = {
   crear: (datos) => request("/mantenciones/", { method: "POST", body: JSON.stringify(datos) }),
   eliminar: (id) => request("/mantenciones/" + id + "/", { method: "DELETE" }),
 };
+
+export const conductoresApi = {
+  listar: () => request("/conductores/"),
+  crear: (datos) => request("/conductores/", { method: "POST", body: JSON.stringify(datos) }),
+  eliminar: (id) => request("/conductores/" + id + "/", { method: "DELETE" }),
+};
+
+export const viajesApi = {
+  listar: () => request("/viajes/"),
+  crear: (datos) => request("/viajes/", { method: "POST", body: JSON.stringify(datos) }),
+  eliminar: (id) => request("/viajes/" + id + "/", { method: "DELETE" }),
+};

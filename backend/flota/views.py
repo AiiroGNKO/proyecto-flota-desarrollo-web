@@ -4,14 +4,17 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import Vehiculo, carga_combustible, Taller, Mantencion
+from .models import Vehiculo, carga_combustible, Taller, Mantencion, Conductor, Viaje
 from .serializers import (
     LoginConRolSerializer,
     VehiculoSerializer,
     CargaCombustibleSerializer,
     TallerSerializer,
     MantencionSerializer,
+    ConductorSerializer,
+    ViajeSerializer,
 )
+
 from .permissions import EsAdminOSoloLectura
 
 
@@ -56,4 +59,15 @@ class CargaCombustibleViewSet(viewsets.ModelViewSet):
 class MantencionViewSet(viewsets.ModelViewSet):
     queryset = Mantencion.objects.all()
     serializer_class = MantencionSerializer
+    permission_classes = [IsAuthenticated]
+
+class ConductorViewSet(viewsets.ModelViewSet):
+    queryset = Conductor.objects.all()
+    serializer_class = ConductorSerializer
+    permission_classes = [EsAdminOSoloLectura]
+
+
+class ViajeViewSet(viewsets.ModelViewSet):
+    queryset = Viaje.objects.all()
+    serializer_class = ViajeSerializer
     permission_classes = [IsAuthenticated]
